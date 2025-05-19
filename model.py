@@ -115,7 +115,9 @@ def NewMap(
 
     return fig, ax
 
-def OficioPatologia(file_path):
+def OficioPatologia(
+        file_path,
+        config):
     global CRS
 
     month_date = {
@@ -174,7 +176,7 @@ def OficioPatologia(file_path):
 
     gdf = gpd.read_file(file_path).to_crs(CRS)
 
-    fig, ax = NewMap([gdf],"Condição",base_shape=gdf_sre)
+    fig, ax = NewMap([gdf],"Condição",config=config,base_shape=gdf_sre)
     ax.legend(['Trecho','Patologia'])
     plt.savefig(map_img_path, bbox_inches='tight')
     # context['img_pavement_map'] = InlineImage(map_img_path,width=Mm(160))
@@ -183,4 +185,6 @@ def OficioPatologia(file_path):
     print(context)
 
 if __name__=="__main__":
-    OficioPatologia("internal_data/shape/M1-S01-CE-350-1-PATOLOGIAS.gpkg")
+    OficioPatologia(
+        "internal_data/shape/M1-S01-CE-350-1-PATOLOGIAS.gpkg",
+        config=(10000,'10 km',240,750,'upper center','lower',0.15))
