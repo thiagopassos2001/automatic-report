@@ -10,6 +10,23 @@ from docx.shared import Mm
 from datetime import datetime
 
 CRS = "EPSG:31984"
+config_set = {
+        "M1-S01-CE-350-1":(4000,'4 km',125,300,'lower center','lower',0.3)
+    }
+month_date = {
+    '01':'janeiro',
+    '02':'fevereiro',
+    '03':'março',
+    '04':'abril',
+    '05':'maio',
+    '06':'junho',
+    '07':'julho',
+    '08':'agosto',
+    '09':'setembro',
+    '10':'outubro',
+    '11':'novembro',
+    '12':'dezembro'
+    }
 
 sns.set_theme()
 plt.rcParams['font.family'] = 'sans serif'
@@ -36,7 +53,7 @@ def NewMap(
     fig, ax = plt.subplots(figsize=(10,10),dpi=600)
 
     if type(base_shape)==gpd.GeoDataFrame:
-        base_shape.plot(ax=ax,linewidth=2,alpha=0.7,color='#a080ff',zorder=5,label='Trecho')
+        base_shape.plot(ax=ax,linewidth=1,alpha=0.7,color='#a080ff',zorder=5,label='Trecho')
         gdf = pd.concat(gdf_list+[base_shape],ignore_index=True)
     else:
         gdf = pd.concat(gdf_list,ignore_index=True)
@@ -120,28 +137,11 @@ def NewMap(
 
 def OficioPatologia(
         file_path,
-        config="auto"):
-    global CRS
-
-    month_date = {
-    '01':'janeiro',
-    '02':'fevereiro',
-    '03':'março',
-    '04':'abril',
-    '05':'maio',
-    '06':'junho',
-    '07':'julho',
-    '08':'agosto',
-    '09':'setembro',
-    '10':'outubro',
-    '11':'novembro',
-    '12':'dezembro'
-    }
-
-    config_set = {
-        "M1-S01-CE-350-1":(4000,'4 km',125,300,'upper center','lower',0.3)
-    }
-
+        config="auto",
+        config_set=config_set,
+        CRS=CRS,
+        month_date=month_date):
+    
     id = "-".join(os.path.basename(file_path).split("-")[:5])
     road_name = "CE-"+id.split("-")[3]
     root_dir = f"internal_data/report/{id}"
@@ -176,7 +176,7 @@ def OficioPatologia(
     gdf = gpd.read_file(file_path).to_crs(CRS)
 
     fig, ax = NewMap([gdf],"Condição",config=config,base_shape=gdf_sre)
-    ax.legend(['Trecho','Ponto Crítico'])
+    ax.legend(['Trecho','Ponto Crítico'],loc=config[4])
     plt.savefig(map_img_path, bbox_inches='tight')
 
     template = DocxTemplate(template_path)
@@ -189,7 +189,7 @@ def OficioPatologia(
         "img_pavement_failure_map":InlineImage(template,map_img_path,width=Mm(160)),
         "img_pavement_failure":InlineImage(template,img_path,width=Mm(120)),
         "count_total_accidents":str(len(df_accidents)),
-        "count_serious_accidents":str(len(df_accidents[df_accidents["gravidade"].isin(["Grave","GRAVE"])])),
+        "count_serious_accidents":str(len(df_accidents[df_accidents["gravidade"].isin(["Grave","GRAVE","Leve","LEVE"])])),
         "count_fatal_accidents":str(len(df_accidents[df_accidents["gravidade"].isin(["Fatal","FATAL"])])),
     }
     
@@ -202,32 +202,15 @@ def OficioPatologia(
 
 def OficioIluminacao(
         file_path,
-        config="auto"):
-    global CRS
-
-    month_date = {
-    '01':'janeiro',
-    '02':'fevereiro',
-    '03':'março',
-    '04':'abril',
-    '05':'maio',
-    '06':'junho',
-    '07':'julho',
-    '08':'agosto',
-    '09':'setembro',
-    '10':'outubro',
-    '11':'novembro',
-    '12':'dezembro'
-    }
-
-    config_set = {
-        "M1-S01-CE-350-1":(4000,'4 km',125,300,'upper center','lower',0.3)
-    }
+        config="auto",
+        config_set=config_set,
+        CRS=CRS,
+        month_date=month_date):
 
     id = "-".join(os.path.basename(file_path).split("-")[:5])
     road_name = "CE-"+id.split("-")[3]
     root_dir = f"internal_data/report/{id}"
-    save_file_path = os.path.join(root_dir,f"Ofício {id} - Patologia.docx")
+    save_file_path = os.path.join(root_dir,f"Ofício {id} - Iluminação.docx")
 
     if config=="auto":
         config = config_set[id]
@@ -235,7 +218,7 @@ def OficioIluminacao(
     date_str = datetime.today().strftime('%d-%m-%Y').split("-")
     date_str = date_str[0]+" de "+f"{month_date[date_str[1]]}"+" de "+date_str[-1]
     
-    template_path = "internal_data/template/Modelo_Patologia.docx"
+    template_path = "internal_data/template/Modelo_Iluminacao.docx"
     accidents_path = "internal_data/support/Sinistros Consolidados (2022 - 2024) - PSV.xlsx"
     accidents_name = "sinistros_22-24"
     base_map_path = "internal_data/support/Shape_SRE_15_04_2025_Compatibilizado.gpkg"
@@ -258,7 +241,7 @@ def OficioIluminacao(
     gdf = gpd.read_file(file_path).to_crs(CRS)
 
     fig, ax = NewMap([gdf],"Condição",config=config,base_shape=gdf_sre)
-    ax.legend(['Trecho','Ponto Crítico'])
+    ax.legend(['Trecho','Ponto Crítico'],loc=config[4])
     plt.savefig(map_img_path, bbox_inches='tight')
 
     template = DocxTemplate(template_path)
@@ -271,7 +254,7 @@ def OficioIluminacao(
         "img_public_lighting_failure_map":InlineImage(template,map_img_path,width=Mm(160)),
         "img_public_lighting_failure":InlineImage(template,img_path,width=Mm(120)),
         "count_total_accidents":str(len(df_accidents)),
-        "count_serious_accidents":str(len(df_accidents[df_accidents["gravidade"].isin(["Grave","GRAVE"])])),
+        "count_serious_accidents":str(len(df_accidents[df_accidents["gravidade"].isin(["Grave","GRAVE","Leve","LEVE"])])),
         "count_fatal_accidents":str(len(df_accidents[df_accidents["gravidade"].isin(["Fatal","FATAL"])])),
     }
     
