@@ -45,7 +45,7 @@ def NewMap(
 
     # Plot
     for i,j in zip(gdf_list,color_set[:len(gdf_list)]):
-        i.plot(ax=ax,linewidth=2,label=i[label_column].iloc[0],color=j,zorder=15)
+        i.plot(ax=ax,linewidth=2,label=i[label_column].iloc[0],color=j,zorder=15,alpha=0.5)
 
     # Correção para rodovias mais verticais
     x_min = min([j[0] for j in ConcatList([list(i.coords) for i in gdf.explode().geometry])])
@@ -65,7 +65,10 @@ def NewMap(
         # Barra escala
         x = min([j[0] for j in ConcatList([list(i.coords) for i in gdf.explode().geometry])])
 
-    cx.add_basemap(ax, crs=gdf.crs,source='https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}') #'https://worldtiles3.waze.com/tiles/{z}/{x}/{y}.png')
+    map_src = 'https://worldtiles3.waze.com/tiles/{z}/{x}/{y}.png'
+    # map_src = 'https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}'
+    # map_src = "https://mt1.google.com/vt/lyrs%3Dy%26x%3D{x}%26y%3D{y}%26z%3D{z}"
+    cx.add_basemap(ax, crs=gdf.crs,source=map_src)
     # Remover números das bordas
     ax.get_xaxis().set_ticks([])
     ax.get_yaxis().set_ticks([])
@@ -117,7 +120,7 @@ def NewMap(
 
 def OficioPatologia(
         file_path,
-        config):
+        config="auto"):
     global CRS
 
     month_date = {
@@ -133,11 +136,19 @@ def OficioPatologia(
     '10':'outubro',
     '11':'novembro',
     '12':'dezembro'
-}
+    }
+
+    config_set = {
+        "M1-S01-CE-350-1":(4000,'4 km',125,300,'upper center','lower',0.3)
+    }
 
     id = "-".join(os.path.basename(file_path).split("-")[:5])
     road_name = "CE-"+id.split("-")[3]
     root_dir = f"internal_data/report/{id}"
+    save_file_path = os.path.join(root_dir,f"Ofício {id} - Patologia.docx")
+
+    if config=="auto":
+        config = config_set[id]
 
     date_str = datetime.today().strftime('%d-%m-%Y').split("-")
     date_str = date_str[0]+" de "+f"{month_date[date_str[1]]}"+" de "+date_str[-1]
@@ -161,30 +172,32 @@ def OficioPatologia(
 
     df_accidents = pd.read_excel(accidents_path,sheet_name=accidents_name)
     df_accidents = df_accidents[df_accidents["SRE"].isin(sre_list)]
-    
-    context = {
-        "city_day_month_year":f"Fortaleza, {date_str}",
-        "count_segments":str(len(sre_list)),
-        "road_name":road_name,
-        "SRE_list":", ".join(sre_list[:-1])+" e "+sre_list[-1] if len(sre_list)>1 else sre_list[0],
-        "img_pavement_map":"",
-        "img_pavement_failure":"",
-        "count_total_accidents":str(len(df_accidents)),
-        "count_serious_accidents":str(len(df_accidents[df_accidents["gravidade"].isin(["Grave","GRAVE"])])),
-        "count_fatal_accidents":str(len(df_accidents[df_accidents["gravidade"].isin(["Fatal","FATAL"])])),
-    }
 
     gdf = gpd.read_file(file_path).to_crs(CRS)
 
     fig, ax = NewMap([gdf],"Condição",config=config,base_shape=gdf_sre)
     ax.legend(['Trecho','Patologia'])
     plt.savefig(map_img_path, bbox_inches='tight')
-    # context['img_pavement_map'] = InlineImage(map_img_path,width=Mm(160))
+
+    template = DocxTemplate(template_path)
+
+    context = {
+        "city_day_month_year":f"Fortaleza, {date_str}",
+        "count_segments":str(len(sre_list)),
+        "road_name":road_name,
+        "SRE_list":", ".join(sre_list[:-1])+" e "+sre_list[-1] if len(sre_list)>1 else sre_list[0],
+        "img_pavement_failure_map":InlineImage(template,map_img_path,width=Mm(160)),
+        "img_pavement_failure":InlineImage(template,img_path,width=Mm(120)),
+        "count_total_accidents":str(len(df_accidents)),
+        "count_serious_accidents":str(len(df_accidents[df_accidents["gravidade"].isin(["Grave","GRAVE"])])),
+        "count_fatal_accidents":str(len(df_accidents[df_accidents["gravidade"].isin(["Fatal","FATAL"])])),
+    }
     plt.clf()
 
-    print(context)
+    template.render(context)
+    template.save(save_file_path)
+
+    print(f"Ofício Patologia salvo em: {save_file_path}")
 
 if __name__=="__main__":
-    OficioPatologia(
-        "internal_data/shape/M1-S01-CE-350-1-PATOLOGIAS.gpkg",
-        config=(10000,'10 km',240,750,'upper center','lower',0.15))
+    OficioPatologia("internal_data/shape/M1-S01-CE-350-1-PAT.gpkg")
