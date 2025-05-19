@@ -192,6 +192,7 @@ def OficioPatologia(
         "count_serious_accidents":str(len(df_accidents[df_accidents["gravidade"].isin(["Grave","GRAVE"])])),
         "count_fatal_accidents":str(len(df_accidents[df_accidents["gravidade"].isin(["Fatal","FATAL"])])),
     }
+    
     plt.clf()
 
     template.render(context)
