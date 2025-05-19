@@ -174,4 +174,3 @@ cython_debug/
 .pypirc
 
 # Personal folders
-internal_data/
