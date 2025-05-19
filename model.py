@@ -268,3 +268,4 @@ def OficioIluminacao(
 if __name__=="__main__":
     OficioPatologia("internal_data/shape/M1-S01-CE-350-1-PAT.gpkg")
     OficioIluminacao("internal_data/shape/M1-S01-CE-350-1-ILU.gpkg")
+    OficioIluminacao("internal_data/shape/M1-S01-CE-350-1-ACO.gpkg")
