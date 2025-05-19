@@ -176,7 +176,7 @@ def OficioPatologia(
     gdf = gpd.read_file(file_path).to_crs(CRS)
 
     fig, ax = NewMap([gdf],"Condição",config=config,base_shape=gdf_sre)
-    ax.legend(['Trecho','Patologia'])
+    ax.legend(['Trecho','Ponto Crítico'])
     plt.savefig(map_img_path, bbox_inches='tight')
 
     template = DocxTemplate(template_path)
@@ -200,5 +200,88 @@ def OficioPatologia(
 
     print(f"Ofício Patologia salvo em: {save_file_path}")
 
+def OficioIluminacao(
+        file_path,
+        config="auto"):
+    global CRS
+
+    month_date = {
+    '01':'janeiro',
+    '02':'fevereiro',
+    '03':'março',
+    '04':'abril',
+    '05':'maio',
+    '06':'junho',
+    '07':'julho',
+    '08':'agosto',
+    '09':'setembro',
+    '10':'outubro',
+    '11':'novembro',
+    '12':'dezembro'
+    }
+
+    config_set = {
+        "M1-S01-CE-350-1":(4000,'4 km',125,300,'upper center','lower',0.3)
+    }
+
+    id = "-".join(os.path.basename(file_path).split("-")[:5])
+    road_name = "CE-"+id.split("-")[3]
+    root_dir = f"internal_data/report/{id}"
+    save_file_path = os.path.join(root_dir,f"Ofício {id} - Patologia.docx")
+
+    if config=="auto":
+        config = config_set[id]
+
+    date_str = datetime.today().strftime('%d-%m-%Y').split("-")
+    date_str = date_str[0]+" de "+f"{month_date[date_str[1]]}"+" de "+date_str[-1]
+    
+    template_path = "internal_data/template/Modelo_Patologia.docx"
+    accidents_path = "internal_data/support/Sinistros Consolidados (2022 - 2024) - PSV.xlsx"
+    accidents_name = "sinistros_22-24"
+    base_map_path = "internal_data/support/Shape_SRE_15_04_2025_Compatibilizado.gpkg"
+    src_psv_path = "internal_data/support/1. Acompanhamento Base.xlsx"
+    sre_psv_name = "Trechos"
+
+    map_img_path = os.path.join(root_dir,"img_public_lighting_failure_map.png")
+    img_path =  os.path.join(root_dir,"img_public_lighting_failure.JPG")
+
+    df_sre = pd.read_excel(src_psv_path,sheet_name=sre_psv_name)
+    df_sre = df_sre[df_sre["ID PSV"]==id]
+    sre_list = df_sre["SRE"].tolist()
+
+    gdf_sre = gpd.read_file(base_map_path).to_crs(CRS)
+    gdf_sre = gdf_sre[gdf_sre["SRE"].isin(sre_list)]
+
+    df_accidents = pd.read_excel(accidents_path,sheet_name=accidents_name)
+    df_accidents = df_accidents[df_accidents["SRE"].isin(sre_list)]
+
+    gdf = gpd.read_file(file_path).to_crs(CRS)
+
+    fig, ax = NewMap([gdf],"Condição",config=config,base_shape=gdf_sre)
+    ax.legend(['Trecho','Ponto Crítico'])
+    plt.savefig(map_img_path, bbox_inches='tight')
+
+    template = DocxTemplate(template_path)
+
+    context = {
+        "city_day_month_year":f"Fortaleza, {date_str}",
+        "count_segments":str(len(sre_list)),
+        "road_name":road_name,
+        "SRE_list":", ".join(sre_list[:-1])+" e "+sre_list[-1] if len(sre_list)>1 else sre_list[0],
+        "img_public_lighting_failure_map":InlineImage(template,map_img_path,width=Mm(160)),
+        "img_public_lighting_failure":InlineImage(template,img_path,width=Mm(120)),
+        "count_total_accidents":str(len(df_accidents)),
+        "count_serious_accidents":str(len(df_accidents[df_accidents["gravidade"].isin(["Grave","GRAVE"])])),
+        "count_fatal_accidents":str(len(df_accidents[df_accidents["gravidade"].isin(["Fatal","FATAL"])])),
+    }
+    
+    plt.clf()
+
+    template.render(context)
+    template.save(save_file_path)
+
+    print(f"Ofício Iluminação salvo em: {save_file_path}")
+
 if __name__=="__main__":
     OficioPatologia("internal_data/shape/M1-S01-CE-350-1-PAT.gpkg")
+    OficioIluminacao("internal_data/shape/M1-S01-CE-350-1-ILU.gpkg")
