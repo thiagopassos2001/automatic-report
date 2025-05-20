@@ -306,7 +306,7 @@ def OficioAcostamento(
     gdf = gpd.read_file(file_path).to_crs(CRS)
 
     fig, ax = NewMap([gdf],"Condição",config=config,base_shape=gdf_sre)
-    ax.legend(['Trecho','Ponto Crítico'],loc=config[4])
+    ax.legend(['Trecho','Trecho Crítico'],loc=config[4])
     plt.savefig(map_img_path, bbox_inches='tight')
 
     template = DocxTemplate(template_path)
@@ -330,7 +330,73 @@ def OficioAcostamento(
 
     print(f"Ofício Acostamento salvo em: {save_file_path}")
 
+def OficioPasseio(
+        file_path,
+        config="auto",
+        config_set=config_set,
+        CRS=CRS,
+        month_date=month_date):
+
+    id = "-".join(os.path.basename(file_path).split("-")[:5])
+    road_name = "CE-"+id.split("-")[3]
+    root_dir = f"internal_data/report/{id}"
+    save_file_path = os.path.join(root_dir,f"Ofício {id} - Passeio.docx")
+
+    if config=="auto":
+        config = config_set[id]
+
+    date_str = datetime.today().strftime('%d-%m-%Y').split("-")
+    date_str = date_str[0]+" de "+f"{month_date[date_str[1]]}"+" de "+date_str[-1]
+    
+    template_path = "internal_data/template/Modelo_Passeio.docx"
+    accidents_path = "internal_data/support/Sinistros Consolidados (2022 - 2024) - PSV.xlsx"
+    accidents_name = "sinistros_22-24"
+    base_map_path = "internal_data/support/Shape_SRE_15_04_2025_Compatibilizado.gpkg"
+    src_psv_path = "internal_data/support/1. Acompanhamento Base.xlsx"
+    sre_psv_name = "Trechos"
+
+    map_img_path = os.path.join(root_dir,"img_sidewalk_failure_map.png")
+    img_path =  os.path.join(root_dir,"img_sidewalk_failure.JPG")
+
+    df_sre = pd.read_excel(src_psv_path,sheet_name=sre_psv_name)
+    df_sre = df_sre[df_sre["ID PSV"]==id]
+    sre_list = df_sre["SRE"].tolist()
+
+    gdf_sre = gpd.read_file(base_map_path).to_crs(CRS)
+    gdf_sre = gdf_sre[gdf_sre["SRE"].isin(sre_list)]
+
+    df_accidents = pd.read_excel(accidents_path,sheet_name=accidents_name)
+    df_accidents = df_accidents[df_accidents["SRE"].isin(sre_list)]
+
+    gdf = gpd.read_file(file_path).to_crs(CRS)
+
+    fig, ax = NewMap([gdf],"Condição",config=config,base_shape=gdf_sre)
+    ax.legend(['Trecho','Trecho Crítico'],loc=config[4])
+    plt.savefig(map_img_path, bbox_inches='tight')
+
+    template = DocxTemplate(template_path)
+
+    context = {
+        "city_day_month_year":f"Fortaleza, {date_str}",
+        "count_segments":str(len(sre_list)),
+        "road_name":road_name,
+        "SRE_list":", ".join(sre_list[:-1])+" e "+sre_list[-1] if len(sre_list)>1 else sre_list[0],
+        "img_sidewalk_failure_map":InlineImage(template,map_img_path,width=Mm(160)),
+        "img_sidewalk_failure":InlineImage(template,img_path,width=Mm(120)),
+        "count_total_accidents":str(len(df_accidents)),
+        "count_serious_accidents":str(len(df_accidents[df_accidents["gravidade"].isin(["Grave","GRAVE","Leve","LEVE"])])),
+        "count_fatal_accidents":str(len(df_accidents[df_accidents["gravidade"].isin(["Fatal","FATAL"])])),
+    }
+    
+    plt.clf()
+
+    template.render(context)
+    template.save(save_file_path)
+
+    print(f"Ofício Passeio salvo em: {save_file_path}")
+
 if __name__=="__main__":
     OficioPatologia("internal_data/shape/M1-S01-CE-350-1-PAT.gpkg")
     OficioIluminacao("internal_data/shape/M1-S01-CE-350-1-ILU.gpkg")
     OficioAcostamento("internal_data/shape/M1-S01-CE-350-1-ACO.gpkg")
+    OficioPasseio("internal_data/shape/M1-S01-CE-350-1-PAS.gpkg")
