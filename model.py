@@ -396,7 +396,18 @@ def OficioPasseio(
     print(f"Ofício Passeio salvo em: {save_file_path}")
 
 if __name__=="__main__":
-    OficioPatologia("internal_data/shape/M1-S01-CE-350-1-PAT.gpkg")
-    OficioIluminacao("internal_data/shape/M1-S01-CE-350-1-ILU.gpkg")
-    OficioAcostamento("internal_data/shape/M1-S01-CE-350-1-ACO.gpkg")
-    OficioPasseio("internal_data/shape/M1-S01-CE-350-1-PAS.gpkg")
+    psv = pd.read_excel(r"C:\Users\thiagop\Desktop\1. Acompanhamento Base.xlsx",sheet_name="Trechos")
+    sre = gpd.read_file(r"C:\Users\thiagop\Desktop\Produtos (Local)\Apoio\Shape_SRE_15_04_2025_LVC_2024_Report.gpkg").to_crs(CRS)
+
+    sre = sre.merge(psv[["SRE","ID PSV"]],on="SRE",how="right")
+    sre = gpd.GeoDataFrame(sre,geometry="geometry",crs=CRS)
+
+    sre["geometry"] = sre.buffer(25)
+    print(sre)
+    sre.to_json().to_file("sre_psv_trechos_prioritarios.json",driver="TopoJSON",index=False)
+
+    if False:
+        OficioPatologia("internal_data/shape/M1-S01-CE-350-1-PAT.gpkg")
+        OficioIluminacao("internal_data/shape/M1-S01-CE-350-1-ILU.gpkg")
+        OficioAcostamento("internal_data/shape/M1-S01-CE-350-1-ACO.gpkg")
+        OficioPasseio("internal_data/shape/M1-S01-CE-350-1-PAS.gpkg")
