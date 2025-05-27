@@ -395,19 +395,49 @@ def OficioPasseio(
 
     print(f"Ofício Passeio salvo em: {save_file_path}")
 
+def do_a_something():
+    dict_values = {
+        "S01":"6. JUNHO",
+        "S02":"7. JULHO",
+        "S03":"8. AGOSTO",
+        "S04":"9. SETEMBRO",
+        "S05":"10. OUTUBRO",
+        "S06":"11. NOVEMBRO",
+    }
+    file_path = r"C:\Users\thiagop\Desktop\municípios_contemplados.xlsx"
+    df = pd.read_excel(file_path)
+    df = df[df["Mês de Implantação"]!="0. NÃO CONTEMPLADO"]
+    df_ID = []
+    for index,row in df.iterrows():
+        for id in row["IDs"].split(", "):
+            d = row[["Município","RegPlan","Data_Entrevista","Cronograma_Implantação"]]
+            d["ID"] = id
+            d["Sprint"] = id.split("-")[1]
+            d["Mês de Implantação"] = dict_values[id.split("-")[1]]
+            d = d.to_dict()
+            for key,values in d.items():
+                d[key] = [values]
+            d = pd.DataFrame(d)
+            df_ID.append(d)
+    df_ID = pd.concat(df_ID,ignore_index=False)
+    df_ID = df_ID.drop_duplicates(subset=["Município","Sprint"])
+    print(df_ID,len(df_ID))
+
 if __name__=="__main__":
-    psv = pd.read_excel(r"C:\Users\thiagop\Desktop\1. Acompanhamento Base.xlsx",sheet_name="Trechos")
-    sre = gpd.read_file(r"C:\Users\thiagop\Desktop\Produtos (Local)\Apoio\Shape_SRE_15_04_2025_LVC_2024_Report.gpkg").to_crs(CRS)
-
-    sre = sre.merge(psv[["SRE","ID PSV"]],on="SRE",how="right")
-    sre = gpd.GeoDataFrame(sre,geometry="geometry",crs=CRS)
-
-    sre["geometry"] = sre.buffer(25)
-    print(sre)
-    sre.to_json().to_file("sre_psv_trechos_prioritarios.json",driver="TopoJSON",index=False)
-
+    
     if False:
-        OficioPatologia("internal_data/shape/M1-S01-CE-350-1-PAT.gpkg")
-        OficioIluminacao("internal_data/shape/M1-S01-CE-350-1-ILU.gpkg")
-        OficioAcostamento("internal_data/shape/M1-S01-CE-350-1-ACO.gpkg")
-        OficioPasseio("internal_data/shape/M1-S01-CE-350-1-PAS.gpkg")
+        psv = pd.read_excel(r"C:\Users\thiagop\Desktop\1. Acompanhamento Base.xlsx",sheet_name="Trechos")
+        sre = gpd.read_file(r"C:\Users\thiagop\Desktop\Produtos (Local)\Apoio\Shape_SRE_15_04_2025_LVC_2024_Report.gpkg").to_crs(CRS)
+
+        sre = sre.merge(psv[["SRE","ID PSV"]],on="SRE",how="right")
+        sre = gpd.GeoDataFrame(sre,geometry="geometry",crs=CRS)
+
+        sre["geometry"] = sre.buffer(25)
+        print(sre)
+        sre.to_json().to_file("sre_psv_trechos_prioritarios.json",driver="TopoJSON",index=False)
+
+        if False:
+            OficioPatologia("internal_data/shape/M1-S01-CE-350-1-PAT.gpkg")
+            OficioIluminacao("internal_data/shape/M1-S01-CE-350-1-ILU.gpkg")
+            OficioAcostamento("internal_data/shape/M1-S01-CE-350-1-ACO.gpkg")
+            OficioPasseio("internal_data/shape/M1-S01-CE-350-1-PAS.gpkg")
