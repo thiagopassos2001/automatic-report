@@ -165,7 +165,7 @@ def OfficialDocument(id,gdf_path,img_path,document_type,config="auto",document_t
 
     road_name = "CE-"+id.split("-")[1]
     root_dir = f"bd/report"
-    save_file_path = f"bd/report/Ofício {document_type} {id}.docx"
+    save_file_path = f"bd/report/{id} Ofício {document_type}.docx"
 
     if config=="auto":
         config = config_set[id]
@@ -188,7 +188,7 @@ def OfficialDocument(id,gdf_path,img_path,document_type,config="auto",document_t
     df_accidents = pd.read_excel(accidents_path,sheet_name=accidents_name)
     df_accidents = df_accidents[df_accidents["SRE"].isin(sre_list)]
 
-    map_img_path = os.path.join(root_dir,f"img_map_{document_type.lower()}_{id}.png")
+    map_img_path = os.path.join(root_dir,f"{id}_img_map_{document_type.lower()}.png")
     fig, ax = NewMap([gdf],"Condição",config=config,base_shape=gdf_sre)
     ax.legend(['Trecho','Trecho Crítico'],loc=config[4])
     plt.savefig(map_img_path, bbox_inches='tight')
@@ -209,16 +209,16 @@ def OfficialDocument(id,gdf_path,img_path,document_type,config="auto",document_t
     template.render(context)
     template.save(save_file_path)
 
-    gdf[["geometry"]].to_file(os.path.join(root_dir,f"{document_type.lower()}_{id}.kml"),driver="KML")
+    gdf[["geometry"]].to_file(os.path.join(root_dir,f"{id.replace('-','_')}_{document_type.lower()}.kml"),driver="KML")
 
     print(f"Ofício salvo em {save_file_path}")
 
 if __name__=="__main__":
     id = "CE-531-1"
-    shape_path = r"\\192.168.0.5\tecnico1\TRABALHOS\ANDAMENTO\2025-CE-EST-DET-EPROS\3. PRODUTOS\2025 - 72 - Projeto Trechos Críticos (PSV)\04. PRODUTOS\CE-531-1\4 - OFÍCIOS\Shape\Baia de ônibus.gpkg"
-    img_path = r"\\192.168.0.5\tecnico1\TRABALHOS\ANDAMENTO\2025-CE-EST-DET-EPROS\3. PRODUTOS\2025 - 72 - Projeto Trechos Críticos (PSV)\04. PRODUTOS\CE-531-1\4 - OFÍCIOS\Shape\Parada_Sem_Baia_Passeio.JPG"
+    shape_path = r"\\192.168.0.5\tecnico1\TRABALHOS\ANDAMENTO\2025-CE-EST-DET-EPROS\3. PRODUTOS\2025 - 72 - Projeto Trechos Críticos (PSV)\04. PRODUTOS\CE-531-1\4 - OFÍCIOS\Shape\gpkg\Patologia.gpkg"
+    img_path = r"\\192.168.0.5\tecnico1\TRABALHOS\ANDAMENTO\2025-CE-EST-DET-EPROS\3. PRODUTOS\2025 - 72 - Projeto Trechos Críticos (PSV)\04. PRODUTOS\CE-531-1\4 - OFÍCIOS\Imagens\Patologia.JPG"
     
     # (scale_len,scale_text,thickness,vert_offset,loc_legend,loc_bar_y,arrow_length)
     config = "auto"
 
-    result = OfficialDocument(id,shape_path,img_path,"BaiaOnibus",config=config)
+    result = OfficialDocument(id,shape_path,img_path,"Patologia",config=config)
