@@ -209,6 +209,8 @@ def OfficialDocument(id,gdf_path,img_path,document_type,config="auto",document_t
     template.render(context)
     template.save(save_file_path)
 
+    gdf[["geometry"]].to_file(os.path.join(root_dir,f"{document_type.lower()}_{id}.kml"),driver="KML")
+
     print(f"Ofício salvo em {save_file_path}")
 
 if __name__=="__main__":
