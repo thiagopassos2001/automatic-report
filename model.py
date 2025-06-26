@@ -13,7 +13,8 @@ from datetime import datetime
 CRS = "EPSG:31984"
 config_set = {
         "CE-350-1":(4000,'4 km',125,300,'lower center','lower',0.3),
-        "CE-531-1":(1000,'1 km',60,150,'center left','lower',0.15)
+        "CE-531-1":(1000,'1 km',60,150,'center left','lower',0.15),
+        "CE-156-1":(5000,"5 km",200,400,'center left','lower',0.15)
     }
 
 month_date = {
@@ -165,7 +166,10 @@ def OfficialDocument(id,gdf_path,img_path,document_type,config="auto",document_t
 
     road_name = "CE-"+id.split("-")[1]
     root_dir = f"bd/report"
-    save_file_path = f"bd/report/{id} Ofício {document_type}.docx"
+    save_file_path = f"bd/report/{id}/{id} Ofício {document_type}.docx"
+        
+    if not os.path.isdir(os.path.basename(save_file_path)):
+        os.mkdir(os.path.basename(save_file_path))
 
     if config=="auto":
         config = config_set[id]
@@ -214,11 +218,11 @@ def OfficialDocument(id,gdf_path,img_path,document_type,config="auto",document_t
     print(f"Ofício salvo em {save_file_path}")
 
 if __name__=="__main__":
-    id = "CE-531-1"
-    shape_path = r"\\192.168.0.5\tecnico1\TRABALHOS\ANDAMENTO\2025-CE-EST-DET-EPROS\3. PRODUTOS\2025 - 72 - Projeto Trechos Críticos (PSV)\04. PRODUTOS\CE-531-1\4 - OFÍCIOS\Shape\gpkg\Patologia.gpkg"
-    img_path = r"\\192.168.0.5\tecnico1\TRABALHOS\ANDAMENTO\2025-CE-EST-DET-EPROS\3. PRODUTOS\2025 - 72 - Projeto Trechos Críticos (PSV)\04. PRODUTOS\CE-531-1\4 - OFÍCIOS\Imagens\Patologia.JPG"
+    id = "CE-156-1"
+    shape_path = r"\\192.168.0.5\tecnico1\TRABALHOS\ANDAMENTO\2025-CE-EST-DET-EPROS\3. PRODUTOS\2025 - 72 - Projeto Trechos Críticos (PSV)\04. PRODUTOS\CE-156-1\3 - RELATÓRIO\ESTUDO\PASSEIO_.gpkg"
+    img_path = r"C:\Users\thiagop\Desktop\PASSEIO.jpeg"
     
     # (scale_len,scale_text,thickness,vert_offset,loc_legend,loc_bar_y,arrow_length)
     config = "auto"
 
-    result = OfficialDocument(id,shape_path,img_path,"Patologia",config=config)
+    result = OfficialDocument(id,shape_path,img_path,"Passeio",config=config)
