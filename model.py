@@ -42,6 +42,31 @@ document_template_path = {
 
 sns.set_theme()
 plt.rcParams['font.family'] = 'sans serif'
+  
+def TestMap(gdf_path,config):
+    gdf = gpd.read_file(gdf_path).to_crs("EPSG:31984")
+
+    # Verifica se o shape está vazio
+    if gdf.empty:
+        raise ValueError(f"O shape fornecido possui '{len(gdf)}' feições.")
+
+    # Adiciona a coluna condição
+    gdf["Condição"] = np.nan
+
+    base_map_path = "bd/support/Shape_SRE_15_04_2025_Compatibilizado.gpkg"
+    src_psv_path = "bd/support/base.csv"
+    
+    df_sre = pd.read_csv(src_psv_path)
+    df_sre = df_sre[df_sre["ID_PSV"]==id]
+    sre_list = df_sre["SRE"].tolist()
+
+    gdf_sre = gpd.read_file(base_map_path).to_crs(CRS)
+    gdf_sre = gdf_sre[gdf_sre["SRE"].isin(sre_list)]
+
+    fig, ax = NewMap([gdf],"Condição",config=config,base_shape=gdf_sre)
+    ax.legend(['Trecho','Trecho Crítico'],loc=config[4])
+
+    return fig, ax
 
 def ConcatList(list_list):
     list_concat = []
