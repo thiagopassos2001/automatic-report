@@ -165,11 +165,11 @@ def OfficialDocument(id,gdf_path,img_path,document_type,config="auto",document_t
     gdf["Condição"] = np.nan
 
     road_name = "CE-"+id.split("-")[1]
-    root_dir = f"bd/report"
-    save_file_path = f"bd/report/{id}/{id} Ofício {document_type}.docx"
+    root_dir = f"bd/report/{id}"
+    save_file_path = os.path.join(root_dir,f"{id} Ofício {document_type}.docx")
         
-    if not os.path.isdir(os.path.basename(save_file_path)):
-        os.mkdir(os.path.basename(save_file_path))
+    if not os.path.isdir(root_dir):
+        os.mkdir(root_dir)
 
     if config=="auto":
         config = config_set[id]
